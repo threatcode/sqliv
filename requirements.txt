@@ -1,4 +1,4 @@
-bs4
-termcolor
-terminaltables
-nyawc
+beautifulsoup4==4.12.2
+termcolor==2.3.0
+terminaltables==3.1.10
+nyawc==2.3.0
