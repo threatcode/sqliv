@@ -33,7 +33,7 @@ def singlescan(url):
             return result
 
         else:
-            print ""  # move carriage return to newline
+            print("")  # move carriage return to newline
             std.stdout("no SQL injection vulnerability found")
             option = std.stdin("do you want to crawl and continue scanning? [Y/N]", ["Y", "N"], upper=True)
 
@@ -171,7 +171,7 @@ if __name__ == "__main__":
         table_data = serverinfo.check([args.target])
 
         std.printserverinfo(table_data)
-        print ""  # give space between two table
+        print("")  # give space between two table
         std.normalprint(vulnerables)
         exit(0)
 
