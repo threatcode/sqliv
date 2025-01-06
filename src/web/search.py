@@ -1,7 +1,8 @@
 # search vulnerabilities by dock
 
 import sys
-from urllib2 import HTTPError, URLError
+from urllib.error import HTTPError, URLError
+import urllib.request
 
 from lib import bing
 from lib import google
