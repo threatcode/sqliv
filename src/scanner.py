@@ -1,7 +1,7 @@
 import time
 import signal
 import multiprocessing
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 import std
 import sqlerrors
