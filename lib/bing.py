@@ -1,5 +1,4 @@
-#!/usr/bin/env python2
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 #
 #
 
@@ -14,8 +13,8 @@ __name__    = 'python-bing'
 __version__ = "0.0.1"
 
 import re
-import urllib
-import urllib2
+import urllib.parse
+import urllib.request
 
 class Bing:
     def __init__(self):
@@ -45,8 +44,8 @@ class Bing:
         :rtpye: str
         '''
 
-        request = urllib2.Request(URL, headers=self.default_headers())
-        resp    = urllib2.urlopen(request)
+        request = urllib.request.Request(URL, headers=self.default_headers())
+        resp    = urllib.request.urlopen(request)
 
         return resp.read()
 
@@ -75,7 +74,7 @@ class Bing:
         start = 1
 
         for page in range(int(round(int(stop), -1)) / 10):
-            URL = (self.bingsearch % (urllib.urlencode({'q': query}))) + '&first=' + str(start)
+            URL = (self.bingsearch % (urllib.parse.urlencode({'q': query}))) + '&first=' + str(start)
 
             html   = self.get_page(URL)
             result = self.parse_links(html)
