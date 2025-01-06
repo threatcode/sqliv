@@ -4,7 +4,7 @@ import time
 import signal
 import multiprocessing
 import bs4
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 import std
 from web import web
