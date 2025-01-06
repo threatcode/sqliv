@@ -3,7 +3,7 @@
 # official.ghost@tuta.io
 
 import argparse
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from src import std
 from src import scanner
@@ -183,4 +183,3 @@ if __name__ == "__main__":
     if args.output != None:
         std.dumpjson(table_data, args.output)
         std.stdout("Dumped result into %s" % args.output)
-
