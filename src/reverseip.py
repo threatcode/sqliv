@@ -1,10 +1,10 @@
 # Reverse Domain Lookup
 
 import sys
-import urllib
-import urllib2
+import urllib.parse
+import urllib.request
 import json
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from web import useragents
 
@@ -20,25 +20,25 @@ def reverseip(url):
     contenttype = "application/x-www-form-urlencoded; charset=UTF-8"
 
     # POST method
-    opener = urllib2.build_opener(
-        urllib2.HTTPHandler(), urllib2.HTTPSHandler())
-    data = urllib.urlencode([('remoteAddress', url), ('key', '')])
+    opener = urllib.request.build_opener(
+        urllib.request.HTTPHandler(), urllib.request.HTTPSHandler())
+    data = urllib.parse.urlencode([('remoteAddress', url), ('key', '')]).encode('utf-8')
 
-    request = urllib2.Request(source, data)
+    request = urllib.request.Request(source, data)
     request.add_header("Content-type", contenttype)
     request.add_header("User-Agent", useragent)
 
     try:
-        result = urllib2.urlopen(request).read()
+        result = urllib.request.urlopen(request).read().decode('utf-8')
 
-    except urllib2.HTTPError, e:
-        print >> sys.stderr, "[{}] HTTP error".format(e.code)
+    except urllib.error.HTTPError as e:
+        print("[{}] HTTP error".format(e.code), file=sys.stderr)
 
-    except urllib2.URLError, e:
-        print >> sys.stderr, "URL error, {}".format(e.reason)
+    except urllib.error.URLError as e:
+        print("URL error, {}".format(e.reason), file=sys.stderr)
 
     except:
-        print >> sys.stderr, "HTTP exception"
+        print("HTTP exception", file=sys.stderr)
 
     obj = json.loads(result)
 
@@ -49,5 +49,5 @@ def reverseip(url):
             domains.append(domain[0])
         return domains
 
-    print >> sys.stderr, "[ERR] {}".format(obj["message"])
+    print("[ERR] {}".format(obj["message"]), file=sys.stderr)
     return []
