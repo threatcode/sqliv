@@ -1,33 +1,10 @@
-# Use Python 3.11 slim image for smaller size
-FROM python:3.11-slim
+FROM python:3
 
-# Install system dependencies first
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        gcc \
-        git \
-        python3-dev \
-        libxml2-dev \
-        libxslt-dev \
-        && apt-get clean \
-        && rm -rf /var/lib/apt/lists/*
+WORKDIR /usr/src/app
 
-WORKDIR /sqliv
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy requirements first to leverage Docker cache
 COPY . .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir beautifulsoup4==4.12.2 && \
-    pip install --no-cache-dir -r requirements.txt --no-deps
-
-# Create non-root user for security
-RUN useradd -m sqliv && \
-    chown -R sqliv:sqliv /sqliv
-
-USER sqliv
-
-# Set entrypoint
-ENTRYPOINT ["python", "sqliv.py"]
-CMD ["--help"]
+CMD [ "python", "./sqliv.py" ]
