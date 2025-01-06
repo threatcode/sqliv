@@ -17,7 +17,7 @@ SQLiv
 
 **Installation**  
 1. git clone https://github.com/the-robot/sqliv.git
-2. sudo python2 setup.py -i
+2. sudo python3 setup.py -i
 
 > Dependencies  
 > - [bs4](https://pypi.python.org/pypi/bs4)  
