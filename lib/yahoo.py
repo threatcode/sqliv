@@ -1,7 +1,8 @@
 # Unofficial Simple Yahoo Scraper by Ghost
 # official.ghost@tuta.io
 
-import urllib2
+import urllib.request
+import urllib.parse
 import bs4
 
 
@@ -31,11 +32,11 @@ class Yahoo:
         for page in range(pages):
             yahoosearch = self.yahoosearch % (query, per_page, (pages+1)*10)
 
-            request = urllib2.Request(yahoosearch)
+            request = urllib.request.Request(yahoosearch)
             request.add_header("Content-type", self.contenttype)
             request.add_header("User-Agent", self.useragent)
 
-            result = urllib2.urlopen(request).read()
+            result = urllib.request.urlopen(request).read()
             urls += self.parse_links(result)
 
         return urls
