@@ -15,16 +15,12 @@ RUN apt-get update && \
 WORKDIR /sqliv
 
 # Copy requirements first to leverage Docker cache
-COPY requirements.txt .
+COPY . .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir beautifulsoup4==4.12.2 && \
     pip install --no-cache-dir -r requirements.txt --no-deps
-
-# Clone and install SQLiv
-RUN git clone https://github.com/threatcode/sqliv.git . && \
-    python setup.py -i
 
 # Create non-root user for security
 RUN useradd -m sqliv && \
