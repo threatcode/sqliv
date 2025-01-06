@@ -1,5 +1,5 @@
 import re
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 #import std
 from nyawc.Options import Options
@@ -17,7 +17,7 @@ class Crawler:
 
     def crawl(self, url):
         if self.crawler is None:
-            print "Cralwer is not setted up"
+            print("Cralwer is not setted up")
             return
 
         parsedurl = urlparse(url)
