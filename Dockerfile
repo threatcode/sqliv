@@ -19,7 +19,8 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir beautifulsoup4==4.12.2 && \
+    pip install --no-cache-dir -r requirements.txt --no-deps
 
 # Clone and install SQLiv
 RUN git clone https://github.com/threatcode/sqliv.git . && \
