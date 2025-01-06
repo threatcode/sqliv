@@ -6,5 +6,7 @@ RUN git clone https://github.com/threatcode/sqliv.git
 WORKDIR /sqliv
 RUN pip install -r requirements.txt && python setup.py -i
 
+RUN apt-get update && apt-get install -y libxml2-dev libxslt-dev
+
 ENTRYPOINT ["python3","sqliv.py"]
 CMD ["--help"]
