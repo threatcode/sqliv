@@ -1,6 +1,6 @@
 #import sys
-import urllib2
-from urlparse import urlparse
+import urllib.request
+from urllib.parse import urlparse
 
 import useragents
 
@@ -12,20 +12,20 @@ def gethtml(url, lastURL=False):
         url = "http://" + url
 
     header = useragents.get()
-    request = urllib2.Request(url, None, header)
+    request = urllib.request.Request(url, None, header)
     html = None
 
     try:
-        reply = urllib2.urlopen(request, timeout=10)
+        reply = urllib.request.urlopen(request, timeout=10)
 
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
         # read html content anyway for reply with HTTP500
         if e.getcode() == 500:
             html = e.read()
         #print >> sys.stderr, "[{}] HTTP error".format(e.code)
         pass
 
-    except urllib2.URLError, e:
+    except urllib.error.URLError as e:
         #print >> sys.stderr, "URL error, {}".format(e.reason)
         pass
 
