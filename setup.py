@@ -130,7 +130,7 @@ if __name__ == "__main__":
         while option != "Y" and option != "N":
             option = input("Do you want to uninstall python dependencies? [Y/N]: ").upper()
 
-        if option == "Y":
+        if option == 'Y':
             dependencies("uninstall")
             print("Python dependencies removed")
 
