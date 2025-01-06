@@ -1,9 +1,11 @@
-# SQLiv v2.0
+# SQLiv v2.1
 # Ghost (github.com/Hadesy2k)
 # official.ghost@tuta.io
 
 import argparse
+import sys
 from urllib.parse import urlparse
+from typing import List, Optional, Dict, Any
 
 from src import std
 from src import scanner
@@ -13,173 +15,165 @@ from src.web import search
 from src.crawler import Crawler
 
 
-# search engine instance
-bing   = search.Bing()
-google = search.Google()
-yahoo = search.Yahoo()
+class SQLiv:
+    def __init__(self):
+        """Initialize search engine instances and crawler"""
+        self.bing = search.Bing()
+        self.google = search.Google()
+        self.yahoo = search.Yahoo()
+        self.crawler = Crawler()
 
-# crawler instance
-crawler = Crawler()
+    def singlescan(self, url: str) -> Optional[List[Dict[str, Any]]]:
+        """
+        Scan a single targeted domain for SQL injection vulnerabilities.
+        
+        Args:
+            url: The URL to scan
+            
+        Returns:
+            List of vulnerable URLs and their details if found, None otherwise
+        """
+        if urlparse(url).query:
+            result = scanner.scan([url])
+            if result:
+                return result
+            
+            print("")  # Move carriage return to newline
+            std.stdout("No SQL injection vulnerability found")
+            if not std.stdin("Do you want to crawl and continue scanning? [Y/N]", ["Y", "N"], upper=True) == 'Y':
+                return None
 
+        # Crawl and scan the links
+        std.stdout(f"Going to crawl {url}")
+        urls = self.crawler.crawl(url)
 
-def singlescan(url):
-    """instance to scan single targeted domain"""
+        if not urls:
+            std.stdout("Found no suitable URLs to test SQLi")
+            return None
 
-    if urlparse(url).query != '':
-        result = scanner.scan([url])
-        if result != []:
-            # scanner.scan print if vulnerable
-            # therefore exit
-            return result
+        std.stdout(f"Found {len(urls)} URLs from crawling")
+        vulnerables = scanner.scan(urls)
 
-        else:
-            print("")  # move carriage return to newline
-            std.stdout("no SQL injection vulnerability found")
-            option = std.stdin("do you want to crawl and continue scanning? [Y/N]", ["Y", "N"], upper=True)
+        if not vulnerables:
+            std.stdout("No SQL injection vulnerability found")
+            return None
 
-            if option == 'N':
-                return False
+        return vulnerables
 
-    # crawl and scan the links
-    # if crawl cannot find links, do some reverse domain
-    std.stdout("going to crawl {}".format(url))
-    urls = crawler.crawl(url)
+    def process_dork_scan(self, args: argparse.Namespace) -> None:
+        """Handle scanning with dork search"""
+        std.stdout("Searching for websites with given dork")
 
-    if not urls:
-        std.stdout("found no suitable urls to test SQLi")
-        #std.stdout("you might want to do reverse domain")
-        return False
+        engines = {
+            "bing": self.bing,
+            "google": self.google,
+            "yahoo": self.yahoo
+        }
 
-    std.stdout("found {} urls from crawling".format(len(urls)))
-    vulnerables = scanner.scan(urls)
+        if args.engine not in engines:
+            std.stderr("Invalid search engine")
+            sys.exit(1)
 
-    if vulnerables == []:
-        std.stdout("no SQL injection vulnerability found")
-        return False
-
-    return vulnerables
-
-
-def initparser():
-    """initialize parser arguments"""
-
-    global parser
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-d", dest="dork", help="SQL injection dork", type=str, metavar="inurl:example")
-    parser.add_argument("-e", dest="engine", help="search engine [Bing, Google, and Yahoo]", type=str, metavar="bing, google, yahoo")
-    parser.add_argument("-p", dest="page", help="number of websites to look for in search engine", type=int, default=10, metavar="100")
-    parser.add_argument("-t", dest="target", help="scan target website", type=str, metavar="www.example.com")
-    parser.add_argument('-r', dest="reverse", help="reverse domain", action='store_true')
-    parser.add_argument('-o', dest="output", help="output result into json", type=str, metavar="result.json")
-    parser.add_argument('-s', action='store_true', help="output search even if there are no results")
-
-
-if __name__ == "__main__":
-    initparser()
-    args = parser.parse_args()
-
-    # find random SQLi by dork
-    if args.dork != None and args.engine != None:
-        std.stdout("searching for websites with given dork")
-
-        # get websites based on search engine
-        if args.engine in ["bing", "google", "yahoo"]:
-            websites = eval(args.engine).search(args.dork, args.page)
-        else:
-            std.stderr("invalid search engine")
-            exit(1)
-
-        std.stdout("{} websites found".format(len(websites)))
+        websites = engines[args.engine].search(args.dork, args.page)
+        std.stdout(f"{len(websites)} websites found")
 
         vulnerables = scanner.scan(websites)
 
         if not vulnerables:
-            if args.s:
-                std.stdout("saved as searches.txt")
+            if args.save_searches:
+                std.stdout("Saved as searches.txt")
                 std.dump(websites, "searches.txt")
+            sys.exit(0)
 
-            exit(0)
+        std.stdout("Scanning server information")
+        self.process_vulnerables(vulnerables)
 
-        std.stdout("scanning server information")
+    def initparser(self) -> argparse.ArgumentParser:
+        """Initialize and return argument parser"""
+        parser = argparse.ArgumentParser(description='SQLiv - Massive SQL injection vulnerability scanner')
+        parser.add_argument("-d", dest="dork", help="SQL injection dork", type=str, metavar="inurl:example")
+        parser.add_argument("-e", dest="engine", help="Search engine [Bing, Google, Yahoo]", type=str, metavar="bing, google, yahoo")
+        parser.add_argument("-p", dest="page", help="Number of websites to look for in search engine", type=int, default=10, metavar="100")
+        parser.add_argument("-t", dest="target", help="Scan target website", type=str, metavar="www.example.com")
+        parser.add_argument('-r', dest="reverse", help="Reverse domain lookup", action='store_true')
+        parser.add_argument('-o', dest="output", help="Output result to JSON file", type=str, metavar="result.json")
+        parser.add_argument('-s', dest="save_searches", help="Save search results even if no vulnerabilities found", action='store_true')
+        return parser
 
-        vulnerableurls = [result[0] for result in vulnerables]
-        table_data = serverinfo.check(vulnerableurls)
-        # add db name to info
-        for result, info in zip(vulnerables, table_data):
-            info.insert(1, result[1])  # database name
-
-        std.fullprint(table_data)
-
-
-    # do reverse domain of given site
-    elif args.target != None and args.reverse:
-        std.stdout("finding domains with same server as {}".format(args.target))
+    def process_reverse_lookup(self, args: argparse.Namespace) -> None:
+        """Handle reverse domain lookup scanning"""
+        std.stdout(f"Finding domains with same server as {args.target}")
         domains = reverseip.reverseip(args.target)
 
-        if domains == []:
-            std.stdout("no domain found with reversing ip")
-            exit(0)
+        if not domains:
+            std.stdout("No domain found with reverse IP lookup")
+            sys.exit(0)
 
-        # if there are domains
-        std.stdout("found {} websites".format(len(domains)))
+        std.stdout(f"Found {len(domains)} websites")
+        std.stdout("Scanning multiple websites with crawling will take long")
 
-        # ask whether user wants to save domains
-        std.stdout("scanning multiple websites with crawling will take long")
-        option = std.stdin("do you want save domains? [Y/N]", ["Y", "N"], upper=True)
-
-        if option == 'Y':
-            std.stdout("saved as domains.txt")
+        if std.stdin("Do you want to save domains? [Y/N]", ["Y", "N"], upper=True) == 'Y':
+            std.stdout("Saved as domains.txt")
             std.dump(domains, "domains.txt")
 
-        # ask whether user wants to crawl one by one or exit
-        option = std.stdin("do you want start crawling? [Y/N]", ["Y", "N"], upper=True)
-
-        if option == 'N':
-            exit(0)
+        if not std.stdin("Do you want to start crawling? [Y/N]", ["Y", "N"], upper=True) == 'Y':
+            sys.exit(0)
 
         vulnerables = []
         for domain in domains:
-            vulnerables_temp = singlescan(domain)
+            vulnerables_temp = self.singlescan(domain)
             if vulnerables_temp:
-                vulnerables += vulnerables_temp
+                vulnerables.extend(vulnerables_temp)
 
-        std.stdout("finished scanning all reverse domains")
-        if vulnerables == []:
-            std.stdout("no vulnerables webistes from reverse domains")
-            exit(0)
+        std.stdout("Finished scanning all reverse domains")
+        if not vulnerables:
+            std.stdout("No vulnerable websites found from reverse domains")
+            sys.exit(0)
 
-        std.stdout("scanning server information")
+        std.stdout("Scanning server information")
+        self.process_vulnerables(vulnerables)
 
+    def process_vulnerables(self, vulnerables: List) -> None:
+        """Process and display vulnerable URLs"""
         vulnerableurls = [result[0] for result in vulnerables]
         table_data = serverinfo.check(vulnerableurls)
-        # add db name to info
+        
+        # Add database name to info
         for result, info in zip(vulnerables, table_data):
-            info.insert(1, result[1])  # database name
+            info.insert(1, result[1])
 
         std.fullprint(table_data)
+        return table_data
 
 
-    # scan SQLi of given site
+def main():
+    sqliv = SQLiv()
+    parser = sqliv.initparser()
+    args = parser.parse_args()
+
+    if args.dork and args.engine:
+        sqliv.process_dork_scan(args)
+    elif args.target and args.reverse:
+        sqliv.process_reverse_lookup(args)
     elif args.target:
-        vulnerables = singlescan(args.target)
-
+        vulnerables = sqliv.singlescan(args.target)
         if not vulnerables:
-            exit(0)
+            sys.exit(0)
 
-        # show domain information of target urls
-        std.stdout("getting server info of domains can take a few mins")
+        std.stdout("Getting server info of domains (this may take a few minutes)")
         table_data = serverinfo.check([args.target])
 
         std.printserverinfo(table_data)
-        print("")  # give space between two table
+        print("")  # Space between tables
         std.normalprint(vulnerables)
-        exit(0)
-
-    # print help message, if no parameter is provided
+        sys.exit(0)
     else:
         parser.print_help()
 
-    # dump result into json if specified
-    if args.output != None:
+    if args.output:
         std.dumpjson(table_data, args.output)
-        std.stdout("Dumped result into %s" % args.output)
+        std.stdout(f"Dumped result into {args.output}")
+
+
+if __name__ == "__main__":
+    main()

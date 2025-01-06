@@ -1,5 +1,16 @@
-bs4
-termcolor
-terminaltables
-nyawc
-lxml
+# Web scraping and parsing
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# HTTP requests
+requests==2.31.0
+urllib3==2.1.0
+nyawc==1.8.2
+
+# Terminal UI
+termcolor==2.3.0
+terminaltables==3.1.10
+
+# Build dependencies
+wheel>=0.41.0
+setuptools>=68.0.0
